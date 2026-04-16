@@ -2,13 +2,14 @@
 // Include PEAR Mail package and db_connect to connect to your database
 require_once "Mail.php";
 require_once 'db_connect.php';
+require_once 'email_config.php';
 
 $message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
 
-    // 2. Check if the email exists in the Users table using the $db object from db_connect.php
+    // Check if the email exists in the Users table using the $db object from db_connect.php
     $stmt = $db->prepare("SELECT userID, Username FROM Users WHERE Email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -17,18 +18,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         
-        // 3. Generate a new random 8-character password
+        // Generate a new random 8-character password
         $new_password = substr(md5(uniqid(rand(), true)), 0, 8); 
         
         // Hash it for the database
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
-        // 4. Update the database with the new hashed password
+        // Update the database with the new hashed password
         $update_stmt = $db->prepare("UPDATE Users SET PasswordHash = ? WHERE Email = ?");
         $update_stmt->bind_param("ss", $hashed_password, $email);
         $update_stmt->execute();
 
-        // 5. Send the email with the UNHASHED temporary password
+        // Send the email with the UNHASHED temporary password
         $toaddress = $email;
         $subject = "Esports League - Password Reset";
         $mailcontent = "Hello " . $user['Username'] . ",\n\n" .
@@ -38,12 +39,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $fromaddress = "From: cadenb.santiago@gmail.com";
 
-        // SMTP configuration (from your old homework)
-        $host = "smtp.gmail.com";
-        $port = "587";
-        $username = "cadenb.santiago@gmail.com";
-        $password = "jftn emqt ubto zlpo"; // Your App Password
-
         $headers = array(
             'From' => $fromaddress,
             'To' => $toaddress,
@@ -52,11 +47,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Sending email
         $smtp = Mail::factory('smtp', array(
-            'host' => $host,
-            'port' => $port,
+            'host' => $smtp_host,
+            'port' => $smtp_port,
             'auth' => true,
-            'username' => $username,
-            'password' => $password
+            'username' => $smtp_username,
+            'password' => $smtp_password
         ));
 
         $mail = $smtp->send($toaddress, $headers, $mailcontent);
