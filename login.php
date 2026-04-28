@@ -1,6 +1,6 @@
 <?php
-session_start();
 require_once 'db_connect.php';
+require_once 'auth_helpers.php';
 
 $error_message = '';
 
@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $result->fetch_assoc();
 
             if (password_verify($password, $user['PasswordHash'])) {
+                session_regenerate_id(true);
                 $_SESSION['userID'] = $user['userID'];
                 $_SESSION['username'] = $user['Username'];
                 $_SESSION['role'] = $user['Role'];
