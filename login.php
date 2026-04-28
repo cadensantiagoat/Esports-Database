@@ -1,4 +1,45 @@
+<?php
+session_start();
+require_once 'db_connect.php';
 
+$error_message = '';
+
+// If already logged in, send user to home page.
+if (isset($_SESSION['userID'])) {
+    header('Location: home_page.php');
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($username === '' || $password === '') {
+        $error_message = 'Please enter both username and password.';
+    } else {
+        $stmt = $db->prepare("SELECT userID, Username, PasswordHash, Role FROM Users WHERE Username = ?");
+        $stmt->bind_param('s', $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+
+            if (password_verify($password, $user['PasswordHash'])) {
+                $_SESSION['userID'] = $user['userID'];
+                $_SESSION['username'] = $user['Username'];
+                $_SESSION['role'] = $user['Role'];
+
+                header('Location: home_page.php');
+                exit();
+            }
+        }
+
+        $error_message = 'Invalid username or password.';
+        $stmt->close();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
