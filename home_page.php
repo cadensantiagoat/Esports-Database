@@ -44,11 +44,15 @@
             <tr style="background-color: #f2f2f2;">
                 <th style="border: 1px solid black; padding: 5px;">Team ID</th>
                 <th style="border: 1px solid black; padding: 5px;">Team Name</th>
+                <th style="border: 1px solid black; padding: 5px;">Action</th>
             </tr>
             <?php while($row = mysqli_fetch_assoc($teams_result)): ?>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['TeamID']; ?></td>
                 <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($row['TeamName']); ?></td>
+                <td style="border: 1px solid black; padding: 5px; text-align: center;">
+                    <a href="team_stats.php?team_id=<?php echo $row['TeamID']; ?>"><strong>View Team</strong></a>
+                </td>
             </tr>
             <?php endwhile; ?>
         </table>
