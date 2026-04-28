@@ -1,5 +1,5 @@
 <?php
-  session_start();
+  require_once('auth_helpers.php');
   require_once('db_connect.php');
 
   // Get all Teams
@@ -30,8 +30,8 @@
         <h1>LCK Esports League</h1>
         
         <p>
-            <?php if(isset($_SESSION['userID'])): ?>
-                Welcome! <a href="logout.php">Logout</a>
+            <?php if(is_logged_in()): ?>
+                Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)! <a href="logout.php">Logout</a>
             <?php else: ?>
                 Viewing as Observer. <a href="login.php">Login</a> or <a href="register.php">Register</a>
             <?php endif; ?>

@@ -1,3 +1,6 @@
+<?php
+$error_message = '';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

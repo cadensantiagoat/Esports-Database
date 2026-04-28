@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once('auth_helpers.php');
 require_once('db_connect.php');
 
 if (!isset($_GET['team_id'])) {
@@ -65,7 +65,11 @@ $players_result = $stmt_players->get_result();
             <?php if ($players_result->num_rows > 0): ?>
                 <?php while($row = $players_result->fetch_assoc()): ?>
                 <tr>
-                    <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($row['GameTag']); ?></td>
+                    <td style="border: 1px solid black; padding: 5px;">
+                        <a href="player_stats.php?player_id=<?php echo (int)$row['userID']; ?>">
+                            <?php echo htmlspecialchars($row['GameTag']); ?>
+                        </a>
+                    </td>
                     <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo htmlspecialchars($row['Rank'] ?? 'N/A'); ?></td>
                     <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo (int)$row['GamesPlayed']; ?></td>
                     <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['AvgKills'] !== null ? $row['AvgKills'] : '0.00'; ?></td>

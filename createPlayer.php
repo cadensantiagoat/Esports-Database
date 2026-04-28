@@ -1,3 +1,9 @@
+<?php
+require_once 'auth_helpers.php';
+require_role(['Player', 'Coach', 'League Owner']);
+
+$error_message = '';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
