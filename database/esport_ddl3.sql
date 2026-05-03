@@ -188,6 +188,19 @@ VALUES
 ('Main', 'Referee', 'main_referee', 'referee@lck.gg', @password123_hash, 4);
 
 
+
+
+
+INSERT INTO Users
+(firstName, lastName, username, email, passwordHash, roleID)
+VALUES
+('Caden', 'Test', 'CadenTest', 'cadenb.santiago@gmail.com', @password123_hash, 2);
+
+
+
+
+
+
 INSERT INTO Teams (teamName, status) VALUES
 ('T1', 'Active'),
 ('Gen.G', 'Active'),
