@@ -1,21 +1,22 @@
 <?php
-  session_start();
+  require_once('auth_helpers.php');
   require_once('db_connect.php');
 
   // Get all Teams
-  $teams_sql = "SELECT TeamID, TeamName FROM Teams ORDER BY TeamName";
+  $teams_sql = "SELECT teamID AS TeamID, teamName AS TeamName FROM Teams ORDER BY teamName";
   $teams_result = mysqli_query($db, $teams_sql);
 
-  // Get all Matches (Joining Teams table to get actual names instead of IDs)
+  // Get all Matches with blue/red teams.
   $matches_sql = "SELECT 
-                    m.MatchID, 
-                    m.MatchDate, 
-                    t1.TeamName AS Team1_Name, 
-                    t2.TeamName AS Team2_Name 
+                    m.matchID AS MatchID,
+                    m.matchDate AS MatchDate,
+                    MAX(CASE WHEN mt.sidePlayed = 'Blue' THEN t.teamName END) AS Team1_Name,
+                    MAX(CASE WHEN mt.sidePlayed = 'Red' THEN t.teamName END) AS Team2_Name
                   FROM Matches m
-                  JOIN Teams t1 ON m.Team1_ID = t1.TeamID
-                  JOIN Teams t2 ON m.Team2_ID = t2.TeamID
-                  ORDER BY m.MatchDate DESC";
+                  JOIN MatchTeam mt ON mt.matchID = m.matchID
+                  JOIN Teams t ON t.teamID = mt.teamID
+                  GROUP BY m.matchID, m.matchDate
+                  ORDER BY m.matchDate DESC";
   $matches_result = mysqli_query($db, $matches_sql);
 ?>
 
@@ -30,10 +31,10 @@
         <h1>LCK Esports League</h1>
         
         <p>
-            <?php if(isset($_SESSION['userID'])): ?>
-                Welcome! <a href="logout.php">Logout</a>
+            <?php if(is_logged_in()): ?>
+                Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)! <a href="logout.php">Logout</a>
             <?php else: ?>
-                Viewing as Observer. <a href="login.php">Login</a> or <a href="register.php">Register</a>
+                Viewing as Visitor. <a href="login.php">Login</a> or <a href="register.php">Register</a>
             <?php endif; ?>
         </p>
 
@@ -44,11 +45,15 @@
             <tr style="background-color: #f2f2f2;">
                 <th style="border: 1px solid black; padding: 5px;">Team ID</th>
                 <th style="border: 1px solid black; padding: 5px;">Team Name</th>
+                <th style="border: 1px solid black; padding: 5px;">Action</th>
             </tr>
             <?php while($row = mysqli_fetch_assoc($teams_result)): ?>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['TeamID']; ?></td>
                 <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($row['TeamName']); ?></td>
+                <td style="border: 1px solid black; padding: 5px; text-align: center;">
+                    <a href="team_stats.php?team_id=<?php echo $row['TeamID']; ?>"><strong>View Team</strong></a>
+                </td>
             </tr>
             <?php endwhile; ?>
         </table>

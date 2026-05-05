@@ -10,11 +10,15 @@ if (!isset($_GET['match_id'])) {
 $match_id = intval($_GET['match_id']); // Sanitize the input
 
 // Query to get the Match Details (Teams and Date)
-$match_sql = "SELECT m.MatchDate, t1.TeamName AS Team1_Name, t2.TeamName AS Team2_Name 
-              FROM Matches m 
-              JOIN Teams t1 ON m.Team1_ID = t1.TeamID 
-              JOIN Teams t2 ON m.Team2_ID = t2.TeamID 
-              WHERE m.MatchID = ?";
+$match_sql = "SELECT 
+                m.matchDate AS MatchDate,
+                MAX(CASE WHEN mt.sidePlayed = 'Blue' THEN t.teamName END) AS Team1_Name,
+                MAX(CASE WHEN mt.sidePlayed = 'Red' THEN t.teamName END) AS Team2_Name
+              FROM Matches m
+              JOIN MatchTeam mt ON mt.matchID = m.matchID
+              JOIN Teams t ON t.teamID = mt.teamID
+              WHERE m.matchID = ?
+              GROUP BY m.matchID, m.matchDate";
 $stmt = $db->prepare($match_sql);
 $stmt->bind_param("i", $match_id);
 $stmt->execute();
@@ -25,12 +29,19 @@ if (!$match_info) {
 }
 
 // Query to get the Player Stats for this specific match
-$stats_sql = "SELECT p.GameTag, t.TeamName, s.Kills, s.Deaths, s.Assists, s.GoldEarned 
-              FROM Stats s 
-              JOIN Players p ON s.PlayerID = p.userID 
-              JOIN Teams t ON p.TeamID = t.TeamID
-              WHERE s.MatchID = ?
-              ORDER BY t.TeamName DESC, p.GameTag ASC";
+$stats_sql = "SELECT 
+                p.gameTag AS GameTag,
+                t.teamName AS TeamName,
+                ps.kills AS Kills,
+                ps.deaths AS Deaths,
+                ps.assists AS Assists,
+                ps.goldEarned AS GoldEarned
+              FROM PlayerStats ps
+              JOIN Players p ON ps.userID = p.userID
+              JOIN Teams t ON ps.teamID = t.teamID
+              JOIN Rounds r ON ps.roundID = r.roundID
+              WHERE r.matchID = ?
+              ORDER BY t.teamName DESC, p.gameTag ASC";
 $stmt_stats = $db->prepare($stats_sql);
 $stmt_stats->bind_param("i", $match_id);
 $stmt_stats->execute();
