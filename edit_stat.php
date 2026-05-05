@@ -9,10 +9,20 @@ if (!isset($_GET['stat_id'])) {
 
 $stat_id = intval($_GET['stat_id']);
 
-$stat_sql = "SELECT s.StatID, s.PlayerID, s.MatchID, s.Kills, s.Deaths, s.Assists, s.GoldEarned, p.GameTag
-             FROM Stats s
-             JOIN Players p ON p.userID = s.PlayerID
-             WHERE s.StatID = ?";
+$stat_sql = "SELECT
+                ps.playerStatsID AS StatID,
+                ps.userID AS PlayerID,
+                m.matchID AS MatchID,
+                ps.kills AS Kills,
+                ps.deaths AS Deaths,
+                ps.assists AS Assists,
+                ps.goldEarned AS GoldEarned,
+                p.gameTag AS GameTag
+             FROM PlayerStats ps
+             JOIN Players p ON p.userID = ps.userID
+             JOIN Rounds r ON ps.roundID = r.roundID
+             JOIN Matches m ON r.matchID = m.matchID
+             WHERE ps.playerStatsID = ?";
 $stmt = $db->prepare($stat_sql);
 $stmt->bind_param("i", $stat_id);
 $stmt->execute();

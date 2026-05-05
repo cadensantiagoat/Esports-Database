@@ -18,7 +18,7 @@ if ($stat_id <= 0 || $kills < 0 || $deaths < 0 || $assists < 0 || $gold < 0) {
     die("<h2>Error: Invalid stat values submitted.</h2><a href='home_page.php'>Return Home</a>");
 }
 
-$check_sql = "SELECT StatID, PlayerID FROM Stats WHERE StatID = ?";
+$check_sql = "SELECT playerStatsID AS StatID, userID AS PlayerID FROM PlayerStats WHERE playerStatsID = ?";
 $stmt_check = $db->prepare($check_sql);
 $stmt_check->bind_param("i", $stat_id);
 $stmt_check->execute();
@@ -35,9 +35,9 @@ if (!can_edit_stat_for_player($db, $player_id)) {
     die("<h2>403 Forbidden</h2><p>You are not allowed to update this stat.</p><a href='home_page.php'>Return Home</a>");
 }
 
-$update_sql = "UPDATE Stats
-               SET Kills = ?, Deaths = ?, Assists = ?, GoldEarned = ?
-               WHERE StatID = ?";
+$update_sql = "UPDATE PlayerStats
+               SET kills = ?, deaths = ?, assists = ?, goldEarned = ?
+               WHERE playerStatsID = ?";
 $stmt_update = $db->prepare($update_sql);
 $stmt_update->bind_param("iiiii", $kills, $deaths, $assists, $gold, $stat_id);
 $stmt_update->execute();

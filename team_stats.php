@@ -8,7 +8,7 @@ if (!isset($_GET['team_id'])) {
 
 $team_id = intval($_GET['team_id']);
 
-$team_sql = "SELECT TeamID, TeamName FROM Teams WHERE TeamID = ?";
+$team_sql = "SELECT teamID AS TeamID, teamName AS TeamName FROM Teams WHERE teamID = ?";
 $stmt_team = $db->prepare($team_sql);
 $stmt_team->bind_param("i", $team_id);
 $stmt_team->execute();
@@ -18,21 +18,22 @@ if (!$team_info) {
     die("<h2>Error: Team not found.</h2><a href='home_page.php'>Return Home</a>");
 }
 
-// Average stats are computed across all matches where this player has a stats row.
+// Average stats are computed across all recorded rounds for each player.
 $players_sql = "SELECT
                     p.userID,
-                    p.GameTag,
-                    p.Rank,
-                    COUNT(s.StatID) AS GamesPlayed,
-                    ROUND(AVG(s.Kills), 2) AS AvgKills,
-                    ROUND(AVG(s.Deaths), 2) AS AvgDeaths,
-                    ROUND(AVG(s.Assists), 2) AS AvgAssists,
-                    ROUND(AVG(s.GoldEarned), 2) AS AvgGold
+                    p.gameTag AS GameTag,
+                    p.playerRank AS `Rank`,
+                    COUNT(ps.playerStatsID) AS GamesPlayed,
+                    ROUND(AVG(ps.kills), 2) AS AvgKills,
+                    ROUND(AVG(ps.deaths), 2) AS AvgDeaths,
+                    ROUND(AVG(ps.assists), 2) AS AvgAssists,
+                    ROUND(AVG(ps.goldEarned), 2) AS AvgGold
                 FROM Players p
-                LEFT JOIN Stats s ON s.PlayerID = p.userID
-                WHERE p.TeamID = ?
-                GROUP BY p.userID, p.GameTag, p.Rank
-                ORDER BY p.GameTag ASC";
+                JOIN TeamMembers tm ON tm.userID = p.userID
+                LEFT JOIN PlayerStats ps ON ps.userID = p.userID
+                WHERE tm.teamID = ? AND tm.roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub') AND tm.status = 'Active'
+                GROUP BY p.userID, p.gameTag, p.playerRank
+                ORDER BY p.gameTag ASC";
 $stmt_players = $db->prepare($players_sql);
 $stmt_players->bind_param("i", $team_id);
 $stmt_players->execute();

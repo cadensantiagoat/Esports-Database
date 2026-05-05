@@ -3,6 +3,7 @@ require_once 'db_connect.php';
 require_once 'auth_helpers.php';
 
 $error_message = '';
+$registered_notice = isset($_GET['registered']) && $_GET['registered'] === '1';
 
 // If already logged in, send user to home page.
 if (isset($_SESSION['userID'])) {
@@ -17,7 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '' || $password === '') {
         $error_message = 'Please enter both username and password.';
     } else {
-        $stmt = $db->prepare("SELECT userID, Username, PasswordHash, Role FROM Users WHERE Username = ?");
+        $stmt = $db->prepare("
+            SELECT u.userID, u.username, u.passwordHash, r.roleName AS role
+            FROM Users u
+            JOIN Roles r ON u.roleID = r.roleID
+            WHERE u.username = ?
+        ");
         $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -25,11 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
 
-            if (password_verify($password, $user['PasswordHash'])) {
+            if (password_verify($password, $user['passwordHash'])) {
                 session_regenerate_id(true);
                 $_SESSION['userID'] = $user['userID'];
-                $_SESSION['username'] = $user['Username'];
-                $_SESSION['role'] = $user['Role'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
 
                 header('Location: home_page.php');
                 exit();
@@ -52,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div align="left">
         <h1>Login</h1>
+        <?php if ($registered_notice): ?>
+            <div class="error-message" style="color:green;border-color:green;">Registration successful. You can log in below.</div>
+        <?php endif; ?>
         <?php if ($error_message): ?>
             <div class="error-message"><?php echo $error_message; ?></div>
         <?php endif; ?>

@@ -3,19 +3,20 @@
   require_once('db_connect.php');
 
   // Get all Teams
-  $teams_sql = "SELECT TeamID, TeamName FROM Teams ORDER BY TeamName";
+  $teams_sql = "SELECT teamID AS TeamID, teamName AS TeamName FROM Teams ORDER BY teamName";
   $teams_result = mysqli_query($db, $teams_sql);
 
-  // Get all Matches (Joining Teams table to get actual names instead of IDs)
+  // Get all Matches with blue/red teams.
   $matches_sql = "SELECT 
-                    m.MatchID, 
-                    m.MatchDate, 
-                    t1.TeamName AS Team1_Name, 
-                    t2.TeamName AS Team2_Name 
+                    m.matchID AS MatchID,
+                    m.matchDate AS MatchDate,
+                    MAX(CASE WHEN mt.sidePlayed = 'Blue' THEN t.teamName END) AS Team1_Name,
+                    MAX(CASE WHEN mt.sidePlayed = 'Red' THEN t.teamName END) AS Team2_Name
                   FROM Matches m
-                  JOIN Teams t1 ON m.Team1_ID = t1.TeamID
-                  JOIN Teams t2 ON m.Team2_ID = t2.TeamID
-                  ORDER BY m.MatchDate DESC";
+                  JOIN MatchTeam mt ON mt.matchID = m.matchID
+                  JOIN Teams t ON t.teamID = mt.teamID
+                  GROUP BY m.matchID, m.matchDate
+                  ORDER BY m.matchDate DESC";
   $matches_result = mysqli_query($db, $matches_sql);
 ?>
 
@@ -33,7 +34,7 @@
             <?php if(is_logged_in()): ?>
                 Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)! <a href="logout.php">Logout</a>
             <?php else: ?>
-                Viewing as Observer. <a href="login.php">Login</a> or <a href="register.php">Register</a>
+                Viewing as Visitor. <a href="login.php">Login</a> or <a href="register.php">Register</a>
             <?php endif; ?>
         </p>
 

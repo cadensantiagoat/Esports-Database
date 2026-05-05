@@ -8,9 +8,10 @@ if (!isset($_GET['player_id'])) {
 
 $player_id = intval($_GET['player_id']);
 
-$player_sql = "SELECT p.userID, p.GameTag, p.TeamID, t.TeamName
+$player_sql = "SELECT p.userID, p.gameTag AS GameTag, tm.teamID AS TeamID, t.teamName AS TeamName
                FROM Players p
-               LEFT JOIN Teams t ON p.TeamID = t.TeamID
+               LEFT JOIN TeamMembers tm ON tm.userID = p.userID AND tm.roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub') AND tm.status = 'Active'
+               LEFT JOIN Teams t ON tm.teamID = t.teamID
                WHERE p.userID = ?";
 $stmt_player = $db->prepare($player_sql);
 $stmt_player->bind_param("i", $player_id);
@@ -23,21 +24,23 @@ if (!$player_info) {
 }
 
 $stats_sql = "SELECT
-                s.StatID,
-                s.MatchID,
-                s.Kills,
-                s.Deaths,
-                s.Assists,
-                s.GoldEarned,
-                m.MatchDate,
-                t1.TeamName AS Team1_Name,
-                t2.TeamName AS Team2_Name
-              FROM Stats s
-              JOIN Matches m ON s.MatchID = m.MatchID
-              JOIN Teams t1 ON m.Team1_ID = t1.TeamID
-              JOIN Teams t2 ON m.Team2_ID = t2.TeamID
-              WHERE s.PlayerID = ?
-              ORDER BY m.MatchDate DESC";
+                ps.playerStatsID AS StatID,
+                m.matchID AS MatchID,
+                ps.kills AS Kills,
+                ps.deaths AS Deaths,
+                ps.assists AS Assists,
+                ps.goldEarned AS GoldEarned,
+                m.matchDate AS MatchDate,
+                MAX(CASE WHEN mt.sidePlayed = 'Blue' THEN t.teamName END) AS Team1_Name,
+                MAX(CASE WHEN mt.sidePlayed = 'Red' THEN t.teamName END) AS Team2_Name
+              FROM PlayerStats ps
+              JOIN Rounds r ON ps.roundID = r.roundID
+              JOIN Matches m ON r.matchID = m.matchID
+              JOIN MatchTeam mt ON mt.matchID = m.matchID
+              JOIN Teams t ON t.teamID = mt.teamID
+              WHERE ps.userID = ?
+              GROUP BY ps.playerStatsID, m.matchID, ps.kills, ps.deaths, ps.assists, ps.goldEarned, m.matchDate
+              ORDER BY m.matchDate DESC";
 $stmt_stats = $db->prepare($stats_sql);
 $stmt_stats->bind_param("i", $player_id);
 $stmt_stats->execute();

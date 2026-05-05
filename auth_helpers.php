@@ -11,7 +11,7 @@ function current_user_id(): ?int
 function current_user_role(): string
 {
     if (!isset($_SESSION['role']) || $_SESSION['role'] === '') {
-        return 'Observer';
+        return 'Visitor';
     }
     return (string)$_SESSION['role'];
 }
@@ -23,7 +23,8 @@ function is_logged_in(): bool
 
 function is_observer(): bool
 {
-    return !is_logged_in() || current_user_role() === 'Observer';
+    $r = current_user_role();
+    return !is_logged_in() || $r === 'Visitor' || $r === 'Observer';
 }
 
 function require_login(string $redirect_to = 'login.php'): void
@@ -65,8 +66,7 @@ function can_reset_any_password(): bool
 
 /*
  * Team scope helper.
- * esport_ddl2.sql does not map coaches to teams,
- * so this returns false for Coach by design until final DDL adds a team link.
+ * Team scope is resolved via TeamMembers.
  */
 function can_manage_team(mysqli $db, int $team_id): bool
 {
@@ -81,21 +81,21 @@ function can_manage_team(mysqli $db, int $team_id): bool
     }
 
     if ($role === 'Player') {
-        $stmt = $db->prepare("SELECT TeamID FROM Players WHERE userID = ? LIMIT 1");
-        $stmt->bind_param("i", $user_id);
+        $stmt = $db->prepare("SELECT 1 FROM TeamMembers WHERE teamID = ? AND userID = ? AND roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub') AND status = 'Active' LIMIT 1");
+        $stmt->bind_param("ii", $team_id, $user_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $row && (int)$row['TeamID'] === $team_id;
+        return (bool)$row;
     }
 
     if ($role === 'Coach') {
-        $stmt = $db->prepare("SELECT TeamID FROM Coaches WHERE userID = ? LIMIT 1");
-        $stmt->bind_param("i", $user_id);
+        $stmt = $db->prepare("SELECT 1 FROM TeamMembers WHERE teamID = ? AND userID = ? AND roleInTeam = 'Coach' AND status = 'Active' LIMIT 1");
+        $stmt->bind_param("ii", $team_id, $user_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $row && (int)$row['TeamID'] === $team_id;
+        return (bool)$row;
     }
 
     return false;
@@ -114,17 +114,17 @@ function can_edit_stat_for_player(mysqli $db, int $stat_player_id): bool
     }
 
     if ($role === 'Coach') {
-        $stmt = $db->prepare("SELECT TeamID FROM Players WHERE userID = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT teamID FROM TeamMembers WHERE userID = ? AND roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub') AND status = 'Active' LIMIT 1");
         $stmt->bind_param("i", $stat_player_id);
         $stmt->execute();
         $player_row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        if (!$player_row || !isset($player_row['TeamID'])) {
+        if (!$player_row || !isset($player_row['teamID'])) {
             return false;
         }
 
-        return can_manage_team($db, (int)$player_row['TeamID']);
+        return can_manage_team($db, (int)$player_row['teamID']);
     }
 
     return false;
