@@ -32,7 +32,9 @@
         
         <p>
             <?php if(is_logged_in()): ?>
-                Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)! <a href="logout.php">Logout</a>
+                Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)!
+                <a href="reset_password.php">Reset password</a> |
+                <a href="logout.php">Logout</a>
             <?php else: ?>
                 Viewing as Visitor. <a href="login.php">Login</a> or <a href="register.php">Register</a>
             <?php endif; ?>
