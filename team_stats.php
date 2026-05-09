@@ -39,6 +39,23 @@ $stmt_players = $db->prepare($players_sql);
 $stmt_players->bind_param("i", $team_id);
 $stmt_players->execute();
 $players_result = $stmt_players->get_result();
+
+$matches_sql = "SELECT
+                    m.matchID AS MatchID,
+                    m.matchDate AS MatchDate,
+                    mt.sidePlayed AS SidePlayed,
+                    mt.outcome AS Outcome,
+                    opp.teamName AS OpponentName
+                FROM MatchTeam mt
+                JOIN Matches m ON m.matchID = mt.matchID
+                LEFT JOIN MatchTeam mt_opp ON mt_opp.matchID = mt.matchID AND mt_opp.teamID <> mt.teamID
+                LEFT JOIN Teams opp ON opp.teamID = mt_opp.teamID
+                WHERE mt.teamID = ?
+                ORDER BY m.matchDate DESC, m.matchID DESC";
+$stmt_matches = $db->prepare($matches_sql);
+$stmt_matches->bind_param("i", $team_id);
+$stmt_matches->execute();
+$matches_result = $stmt_matches->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -90,6 +107,40 @@ $players_result = $stmt_players->get_result();
                 <tr>
                     <td colspan="7" style="border: 1px solid black; padding: 10px; text-align: center;">
                         No players found for this team.
+                    </td>
+                </tr>
+            <?php endif; ?>
+        </table>
+
+        <br><br>
+
+        <h2>Team Match History</h2>
+        <table style="border-collapse: collapse; width: 90%;">
+            <tr style="background-color: #f2f2f2;">
+                <th style="border: 1px solid black; padding: 5px;">Match ID</th>
+                <th style="border: 1px solid black; padding: 5px;">Date</th>
+                <th style="border: 1px solid black; padding: 5px;">Opponent</th>
+                <th style="border: 1px solid black; padding: 5px;">Side</th>
+                <th style="border: 1px solid black; padding: 5px;">Outcome</th>
+                <th style="border: 1px solid black; padding: 5px;">Action</th>
+            </tr>
+            <?php if ($matches_result->num_rows > 0): ?>
+                <?php while($match_row = $matches_result->fetch_assoc()): ?>
+                <tr>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo (int)$match_row['MatchID']; ?></td>
+                    <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($match_row['MatchDate']); ?></td>
+                    <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($match_row['OpponentName'] ?? 'TBD'); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo htmlspecialchars($match_row['SidePlayed'] ?? 'N/A'); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo htmlspecialchars($match_row['Outcome'] ?? 'Pending'); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;">
+                        <a href="match_stats.php?match_id=<?php echo (int)$match_row['MatchID']; ?>"><strong>View Match</strong></a>
+                    </td>
+                </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="6" style="border: 1px solid black; padding: 10px; text-align: center;">
+                        No matches found for this team.
                     </td>
                 </tr>
             <?php endif; ?>
