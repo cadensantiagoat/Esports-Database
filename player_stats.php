@@ -26,20 +26,25 @@ if (!$player_info) {
 $stats_sql = "SELECT
                 ps.playerStatsID AS StatID,
                 m.matchID AS MatchID,
+                r.roundNumber AS RoundNumber,
+                ps.championPlayed AS ChampionPlayed,
                 ps.kills AS Kills,
                 ps.deaths AS Deaths,
                 ps.assists AS Assists,
                 ps.goldEarned AS GoldEarned,
                 m.matchDate AS MatchDate,
+                mt_self.sidePlayed AS SidePlayed,
+                mt_self.outcome AS MatchOutcome,
                 MAX(CASE WHEN mt.sidePlayed = 'Blue' THEN t.teamName END) AS Team1_Name,
                 MAX(CASE WHEN mt.sidePlayed = 'Red' THEN t.teamName END) AS Team2_Name
               FROM PlayerStats ps
               JOIN Rounds r ON ps.roundID = r.roundID
               JOIN Matches m ON r.matchID = m.matchID
+              LEFT JOIN MatchTeam mt_self ON mt_self.matchID = m.matchID AND mt_self.teamID = ps.teamID
               JOIN MatchTeam mt ON mt.matchID = m.matchID
               JOIN Teams t ON t.teamID = mt.teamID
               WHERE ps.userID = ?
-              GROUP BY ps.playerStatsID, m.matchID, ps.kills, ps.deaths, ps.assists, ps.goldEarned, m.matchDate
+              GROUP BY ps.playerStatsID, m.matchID, r.roundNumber, ps.championPlayed, ps.kills, ps.deaths, ps.assists, ps.goldEarned, m.matchDate, mt_self.sidePlayed, mt_self.outcome
               ORDER BY m.matchDate DESC";
 $stmt_stats = $db->prepare($stats_sql);
 $stmt_stats->bind_param("i", $player_id);
@@ -55,7 +60,7 @@ $stats_result = $stmt_stats->get_result();
 </head>
 <body>
     <div align="left">
-        <h1>Player Match Stats</h1>
+        <h1>Player Match History</h1>
         <p><a href="team_stats.php?team_id=<?php echo (int)$player_info['TeamID']; ?>">← Back to Team</a></p>
 
         <h2>
@@ -66,7 +71,11 @@ $stats_result = $stmt_stats->get_result();
         <table style="border-collapse: collapse; width: 90%;">
             <tr style="background-color: #f2f2f2;">
                 <th style="border: 1px solid black; padding: 5px;">Match Date</th>
+                <th style="border: 1px solid black; padding: 5px;">Round</th>
                 <th style="border: 1px solid black; padding: 5px;">Matchup</th>
+                <th style="border: 1px solid black; padding: 5px;">Champion</th>
+                <th style="border: 1px solid black; padding: 5px;">Side</th>
+                <th style="border: 1px solid black; padding: 5px;">Outcome</th>
                 <th style="border: 1px solid black; padding: 5px;">Kills</th>
                 <th style="border: 1px solid black; padding: 5px;">Deaths</th>
                 <th style="border: 1px solid black; padding: 5px;">Assists</th>
@@ -77,9 +86,13 @@ $stats_result = $stmt_stats->get_result();
                 <?php while ($row = $stats_result->fetch_assoc()): ?>
                 <tr>
                     <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($row['MatchDate']); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo (int)$row['RoundNumber']; ?></td>
                     <td style="border: 1px solid black; padding: 5px;">
                         <?php echo htmlspecialchars($row['Team1_Name']); ?> vs <?php echo htmlspecialchars($row['Team2_Name']); ?>
                     </td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo htmlspecialchars($row['ChampionPlayed'] ?? 'N/A'); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo htmlspecialchars($row['SidePlayed'] ?? 'N/A'); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo htmlspecialchars($row['MatchOutcome'] ?? 'Pending'); ?></td>
                     <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo (int)$row['Kills']; ?></td>
                     <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo (int)$row['Deaths']; ?></td>
                     <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo (int)$row['Assists']; ?></td>
@@ -95,7 +108,7 @@ $stats_result = $stmt_stats->get_result();
                 <?php endwhile; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" style="border: 1px solid black; padding: 10px; text-align: center;">
+                    <td colspan="11" style="border: 1px solid black; padding: 10px; text-align: center;">
                         No match stats found for this player.
                     </td>
                 </tr>
