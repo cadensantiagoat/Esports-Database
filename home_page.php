@@ -18,6 +18,7 @@
                   GROUP BY m.matchID, m.matchDate
                   ORDER BY m.matchDate DESC";
   $matches_result = mysqli_query($db, $matches_sql);
+  $team_deleted_notice = trim($_GET['team_deleted'] ?? '');
 ?>
 
 <!DOCTYPE html>
@@ -33,7 +34,10 @@
         <p>
             <?php if(is_logged_in()): ?>
                 Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)!
-                <a href="reset_password.php">Reset password</a> |
+                <?php if (in_array(current_user_role(), ['Coach', 'League Owner'], true)): ?>
+                    | <a href="createTeam.php">Create team</a>
+                <?php endif; ?>
+                | <a href="reset_password.php">Reset password</a> |
                 <a href="logout.php">Logout</a>
             <?php else: ?>
                 Viewing as Visitor. <a href="login.php">Login</a> or <a href="register.php">Register</a>
@@ -41,6 +45,9 @@
         </p>
 
         <hr>
+        <?php if ($team_deleted_notice !== ''): ?>
+            <p style="color: green;">Team deleted successfully: <?php echo htmlspecialchars($team_deleted_notice); ?></p>
+        <?php endif; ?>
 
         <h2>Active Teams</h2>
         <table style="border-collapse: collapse; width: 50%;">

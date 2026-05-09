@@ -17,6 +17,7 @@ $team_info = $stmt_team->get_result()->fetch_assoc();
 if (!$team_info) {
     die("<h2>Error: Team not found.</h2><a href='home_page.php'>Return Home</a>");
 }
+$can_delete_team = in_array(current_user_role(), ['Coach', 'League Owner'], true) && can_manage_team($db, $team_id);
 
 // Average stats are computed across all recorded rounds for each player.
 $players_sql = "SELECT
@@ -52,6 +53,12 @@ $players_result = $stmt_players->get_result();
         <p><a href="home_page.php">← Back to Homepage</a></p>
 
         <h2><?php echo htmlspecialchars($team_info['TeamName']); ?></h2>
+        <?php if ($can_delete_team): ?>
+            <form action="delete_team.php" method="POST" onsubmit="return confirm('Delete this team and all related records? This cannot be undone.');">
+                <input type="hidden" name="team_id" value="<?php echo (int)$team_info['TeamID']; ?>">
+                <button type="submit" style="margin-bottom: 12px; background-color: #a20000; color: white;">Delete Team</button>
+            </form>
+        <?php endif; ?>
 
         <table style="border-collapse: collapse; width: 80%;">
             <tr style="background-color: #f2f2f2;">
