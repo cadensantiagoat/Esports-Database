@@ -1,6 +1,8 @@
 <?php
 require_once 'auth_helpers.php';
-require_role(['Player', 'Coach', 'League Owner']);
+require_once 'db_connect.php';
+
+require_permission($db, 'manage_roles');
 
 $error_message = '';
 ?>

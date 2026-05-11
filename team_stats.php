@@ -17,7 +17,7 @@ $team_info = $stmt_team->get_result()->fetch_assoc();
 if (!$team_info) {
     die("<h2>Error: Team not found.</h2><a href='home_page.php'>Return Home</a>");
 }
-$can_delete_team = in_array(current_user_role(), ['Coach', 'League Owner'], true) && can_manage_team($db, $team_id);
+$can_delete_team = can_manage_team($db, $team_id);
 
 // Average stats are computed across all recorded rounds for each player.
 $players_sql = "SELECT

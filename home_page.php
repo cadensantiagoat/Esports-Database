@@ -32,11 +32,17 @@
         <h1>LCK Esports League</h1>
         
         <p>
-            <?php if(is_logged_in()): ?>
+            <?php if (is_logged_in()): ?>
                 Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?> (<?php echo htmlspecialchars(current_user_role()); ?>)!
-                <?php if (in_array(current_user_role(), ['Coach', 'League Owner'], true)): ?>
+
+                <?php if (has_permission($db, 'create_team')): ?>
                     | <a href="createTeam.php">Create team</a>
                 <?php endif; ?>
+
+                <?php if (has_permission($db, 'manage_roles')): ?>
+                    | <a href="manage_roles.php">Manage roles</a>
+                <?php endif; ?>
+
                 | <a href="reset_password.php">Reset password</a> |
                 <a href="logout.php">Logout</a>
             <?php else: ?>

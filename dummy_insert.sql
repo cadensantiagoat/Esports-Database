@@ -12,7 +12,7 @@ INSERT INTO Teams (teamName, status) VALUES
 ('CSUF Titans', 'Active')
 ON DUPLICATE KEY UPDATE teamName = VALUES(teamName), status = VALUES(status);
 
--- Upsert Users (roleID: 2=Player, 3=Coach, 5=League Owner)
+-- Upsert Users (roleID: 2=Player, 3=Coach, 5=Exec. Manager)
 INSERT INTO Users (firstName, lastName, username, email, passwordHash, roleID) VALUES
 ('Sang-hyeok', 'Lee', 'faker_player', 'faker@t1.gg', @password123_hash, 2),
 ('Hyeon-jun', 'Mun', 'oner_player', 'oner@t1.gg', @password123_hash, 2),
@@ -32,7 +32,8 @@ INSERT INTO Users (firstName, lastName, username, email, passwordHash, roleID) V
 ('Jeong-gyun', 'Kim', 'kkoma_coach', 'kkoma@t1.gg', @password123_hash, 3),
 ('Sang-wook', 'Ryu', 'ryu_coach', 'ryu@geng.gg', @password123_hash, 3),
 ('Tim', 'Langsdorf', 'langsdorf_coach', 'langsdorf@csu.fullerton.edu', @password123_hash, 3),
-('League', 'Owner', 'league_owner', 'admin@lck.gg', @password123_hash, 5),
+('Ricky', 'Referee', 'referee_user', 'referee@lck.gg', @password123_hash, 4),
+('Executive', 'Manager', 'executive_manager', 'exec@lck.gg', @password123_hash, 5),
 ('Caden', 'Test', 'CadenTest', 'cadenb.santiago@gmail.com', @password123_hash, 2)
 ON DUPLICATE KEY UPDATE
     firstName = VALUES(firstName),

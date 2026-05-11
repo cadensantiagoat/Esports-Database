@@ -23,8 +23,7 @@ function is_logged_in(): bool
 
 function is_observer(): bool
 {
-    $r = current_user_role();
-    return !is_logged_in() || $r === 'Visitor' || $r === 'Observer';
+    return !is_logged_in() || current_user_role() === 'Visitor';
 }
 
 function require_login(string $redirect_to = 'login.php'): void
@@ -54,14 +53,15 @@ function can_edit_own_profile(int $target_user_id): bool
     return is_logged_in() && current_user_id() === $target_user_id;
 }
 
-function can_manage_roles(): bool
+
+function can_manage_roles(mysqli $db): bool
 {
-    return current_user_role() === 'League Owner';
+    return has_permission($db, 'manage_roles');
 }
 
-function can_reset_any_password(): bool
+function can_reset_any_password(mysqli $db): bool
 {
-    return current_user_role() === 'League Owner';
+    return has_permission($db, 'reset_any_password');
 }
 
 /*
@@ -70,8 +70,7 @@ function can_reset_any_password(): bool
  */
 function can_manage_team(mysqli $db, int $team_id): bool
 {
-    $role = current_user_role();
-    if ($role === 'League Owner') {
+    if (has_permission($db, 'manage_all_teams')) {
         return true;
     }
 
@@ -80,16 +79,7 @@ function can_manage_team(mysqli $db, int $team_id): bool
         return false;
     }
 
-    if ($role === 'Player') {
-        $stmt = $db->prepare("SELECT 1 FROM TeamMembers WHERE teamID = ? AND userID = ? AND roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub') AND status = 'Active' LIMIT 1");
-        $stmt->bind_param("ii", $team_id, $user_id);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        return (bool)$row;
-    }
-
-    if ($role === 'Coach') {
+    if (has_permission($db, 'manage_own_team')) {
         $stmt = $db->prepare("SELECT 1 FROM TeamMembers WHERE teamID = ? AND userID = ? AND roleInTeam = 'Coach' AND status = 'Active' LIMIT 1");
         $stmt->bind_param("ii", $team_id, $user_id);
         $stmt->execute();
@@ -103,17 +93,15 @@ function can_manage_team(mysqli $db, int $team_id): bool
 
 function can_edit_stat_for_player(mysqli $db, int $stat_player_id): bool
 {
-    $role = current_user_role();
-
-    if ($role === 'League Owner') {
+    if (has_permission($db, 'edit_all_stats')) {
         return true;
     }
 
-    if ($role === 'Player') {
+    if (has_permission($db, 'edit_own_stats')) {
         return current_user_id() === $stat_player_id;
     }
 
-    if ($role === 'Coach') {
+    if (has_permission($db, 'manage_own_team')) {
         $stmt = $db->prepare("SELECT teamID FROM TeamMembers WHERE userID = ? AND roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub') AND status = 'Active' LIMIT 1");
         $stmt->bind_param("i", $stat_player_id);
         $stmt->execute();
@@ -129,4 +117,45 @@ function can_edit_stat_for_player(mysqli $db, int $stat_player_id): bool
 
     return false;
 }
+
+function has_permission(mysqli $db, string $permission_name): bool
+{
+    $user_id = current_user_id();
+
+    if ($user_id === null) {
+        return false;
+    }
+
+    $stmt = $db->prepare("
+        SELECT 1
+        FROM Users u
+        JOIN RolePermissions rp ON u.roleID = rp.roleID
+        WHERE u.userID = ?
+          AND rp.permissionName = ?
+        LIMIT 1
+    ");
+
+    $stmt->bind_param("is", $user_id, $permission_name);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    return (bool)$row;
+}
+
+function require_permission(mysqli $db, string $permission_name): void
+{
+    if (!is_logged_in()) {
+        header('Location: login.php');
+        exit();
+    }
+
+    if (!has_permission($db, $permission_name)) {
+        http_response_code(403);
+        echo "<h2>403 Forbidden</h2><p>You do not have permission to access this page.</p><p><a href='home_page.php'>Return Home</a></p>";
+        exit();
+    }
+}
+
+
 ?>

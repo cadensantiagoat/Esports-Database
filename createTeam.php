@@ -2,7 +2,7 @@
 require_once 'auth_helpers.php';
 require_once 'db_connect.php';
 
-require_role(['Coach', 'League Owner']);
+require_permission($db, 'create_team');
 
 $error_message = '';
 $team_name = '';
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insert_stmt->close();
 
                 // Coaches can optionally attach themselves as the new team's coach.
-                if (current_user_role() === 'Coach' && $assign_self_as_coach) {
+                if (has_permission($db, 'manage_own_team') && $assign_self_as_coach) {
                     $coach_user_id = current_user_id();
                     if ($coach_user_id !== null) {
                         $member_stmt = $db->prepare(
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="Inactive" <?php echo $team_status === 'Inactive' ? 'selected' : ''; ?>>Inactive</option>
             </select><br><br>
 
-            <?php if (current_user_role() === 'Coach'): ?>
+            <?php if (has_permission($db, 'manage_own_team')): ?>
                 <label>
                     <input type="checkbox" name="assign_self_as_coach" <?php echo $assign_self_as_coach ? 'checked' : ''; ?>>
                     Assign me as this team's coach

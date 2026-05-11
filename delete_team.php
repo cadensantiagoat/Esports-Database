@@ -3,11 +3,6 @@ require_once 'auth_helpers.php';
 require_once 'db_connect.php';
 
 require_login();
-$current_role = current_user_role();
-if (!in_array($current_role, ['Coach', 'League Owner'], true)) {
-    http_response_code(403);
-    die("<h2>403 Forbidden</h2><p>Only coaches or league owners can delete teams.</p><a href='home_page.php'>Return Home</a>");
-}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: home_page.php');

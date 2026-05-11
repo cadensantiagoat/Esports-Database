@@ -1,6 +1,8 @@
 <?php
 require_once 'auth_helpers.php';
-require_role(['League Owner']);
+require_once 'db_connect.php';
+
+require_permission($db, 'manage_roles');
 
 $error_message = '';
 ?>
@@ -13,7 +15,7 @@ $error_message = '';
 </head>
 <body>
     <div align="left">
-        <h1>Create an Admin Account</h1>
+        <h1>Create Executive Manager Account</h1>
 
         <?php if ($error_message): ?>
             <div><?php echo $error_message; ?></div>

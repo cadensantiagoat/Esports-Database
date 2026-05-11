@@ -3,7 +3,7 @@
 
 
 // DOCKER SETUP (Caden)
-$host = 'cpsc431-mysql';
+$host = 'localhost';
 $user = 'user';
 $pass = 'password';
 
