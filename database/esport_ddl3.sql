@@ -162,6 +162,7 @@ INSERT INTO RolePermissions (roleID, permissionName) VALUES
 
 (4, 'edit_match_data'),
 (4, 'create_matches'),
+(4, 'delete_matches'),
 
 (3, 'create_team'),
 (3, 'manage_own_team'),

@@ -23,10 +23,13 @@ $stmt = $db->prepare($match_sql);
 $stmt->bind_param("i", $match_id);
 $stmt->execute();
 $match_info = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
 if (!$match_info) {
     die("<h2>Error: Match not found.</h2><a href='home_page.php'>Return Home</a>");
 }
+
+$can_delete_match = has_permission($db, 'delete_matches');
 
 // Query to get the Player Stats for this specific match
 $stats_sql = "SELECT 
@@ -58,6 +61,13 @@ $stats_result = $stmt_stats->get_result();
     <div align="left">
         <h1>Match Scoreboard</h1>
         <p><a href="home_page.php">← Back to Homepage</a></p>
+
+        <?php if ($can_delete_match): ?>
+            <form action="delete_match.php" method="POST" onsubmit="return confirm('Delete this match and all recorded stats? This cannot be undone.');" style="margin-bottom: 12px;">
+                <input type="hidden" name="match_id" value="<?php echo (int)$match_id; ?>">
+                <button type="submit" style="background-color: #a20000; color: white;">Delete Match</button>
+            </form>
+        <?php endif; ?>
         
         <h2><?php echo htmlspecialchars($match_info['Team1_Name']); ?> vs <?php echo htmlspecialchars($match_info['Team2_Name']); ?></h2>
         <p><strong>Date:</strong> <?php echo $match_info['MatchDate']; ?></p>

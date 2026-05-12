@@ -19,6 +19,7 @@
                   ORDER BY m.matchDate DESC";
   $matches_result = mysqli_query($db, $matches_sql);
   $team_deleted_notice = trim($_GET['team_deleted'] ?? '');
+  $match_deleted_notice = trim($_GET['match_deleted'] ?? '');
 ?>
 
 <!DOCTYPE html>
@@ -62,6 +63,18 @@
         <?php if ($team_deleted_notice !== ''): ?>
             <p style="color: green;">Team deleted successfully: <?php echo htmlspecialchars($team_deleted_notice); ?></p>
         <?php endif; ?>
+        <?php if ($match_deleted_notice !== ''): ?>
+            <p style="color: green;">Match deleted successfully: <?php echo htmlspecialchars($match_deleted_notice); ?></p>
+        <?php endif; ?>
+
+        <h2>Search Players</h2>
+        <form action="search_player.php" method="GET">
+            <label for="player_search_q">Player name / IGN:</label><br>
+            <input type="text" id="player_search_q" name="q" placeholder="e.g. Faker" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <br>
 
         <h2>Active Teams</h2>
         <table style="border-collapse: collapse; width: 50%;">
