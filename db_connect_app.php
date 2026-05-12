@@ -1,6 +1,8 @@
 <?php
 
-$host = getenv('DB_HOST') ?: 'localhost';
+// Login/register/reset use the shared app account; in Docker this must
+// point at the MariaDB service name instead of localhost.
+$host = getenv('DB_HOST') ?: 'cpsc431-mysql';
 
 $user = getenv('DB_USER') ?: 'user';
 
