@@ -39,6 +39,14 @@
                     | <a href="createTeam.php">Create team</a>
                 <?php endif; ?>
 
+                <?php if (has_permission($db, 'create_matches')): ?>
+                    | <a href="create_match.php">Create match</a>
+                <?php endif; ?>
+
+                <?php if (has_permission($db, 'edit_match_data')): ?>
+                    | <a href="record_match_result.php">Record match</a>
+                <?php endif; ?>
+
                 <?php if (has_permission($db, 'manage_roles')): ?>
                     | <a href="manage_roles.php">Manage roles</a>
                 <?php endif; ?>

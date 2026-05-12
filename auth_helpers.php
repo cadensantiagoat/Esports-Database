@@ -118,24 +118,29 @@ function can_edit_stat_for_player(mysqli $db, int $stat_player_id): bool
     return false;
 }
 
+
+function current_role_id(): ?int
+{
+    return isset($_SESSION['roleID']) ? (int)$_SESSION['roleID'] : null;
+}
+
 function has_permission(mysqli $db, string $permission_name): bool
 {
-    $user_id = current_user_id();
+    $role_id = current_role_id();
 
-    if ($user_id === null) {
+    if ($role_id === null) {
         return false;
     }
 
     $stmt = $db->prepare("
         SELECT 1
-        FROM Users u
-        JOIN RolePermissions rp ON u.roleID = rp.roleID
-        WHERE u.userID = ?
-          AND rp.permissionName = ?
+        FROM RolePermissions
+        WHERE roleID = ?
+          AND permissionName = ?
         LIMIT 1
     ");
 
-    $stmt->bind_param("is", $user_id, $permission_name);
+    $stmt->bind_param("is", $role_id, $permission_name);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();

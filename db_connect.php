@@ -1,17 +1,31 @@
 <?php
 // Add database connection here. You can comment or uncomment the block that matches your environment
 
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
-// DOCKER SETUP (Caden)
-$host = 'localhost';
-$user = 'user';
-$pass = 'password';
+$host = getenv('DB_HOST') ?: 'localhost';
+$db_name = getenv('DB_NAME') ?: 'EsportLeagueDB';
 
-$db_name = 'EsportLeagueDB';
+$role_passwords = [
+    'visitor_role' => '!visitor',
+    'player_role' => '!player',
+    'coach_role' => '!coach',
+    'referee_role' => '!referee',
+    'executive_manager_role' => '!executive_manager'
+];
 
-$db = new mysqli($host, $user, $pass, $db_name);
+$db_account = $_SESSION['dbAccountName'] ?? 'visitor_role';
+
+if (!array_key_exists($db_account, $role_passwords)) {
+    $db_account = 'visitor_role';
+}
+
+$db = new mysqli($host, $db_account, $role_passwords[$db_account], $db_name);
 
 if ($db->connect_error) {
     die("Database connection failed: " . $db->connect_error);
 }
+
 ?>

@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once('auth_helpers.php');
 require_once('db_connect.php');
 
 // Check if a match ID was passed in the URL
@@ -71,16 +71,25 @@ $stats_result = $stmt_stats->get_result();
                 <th style="border: 1px solid black; padding: 5px;">Assists</th>
                 <th style="border: 1px solid black; padding: 5px;">Gold</th>
             </tr>
-            <?php while($row = $stats_result->fetch_assoc()): ?>
-            <tr>
-                <td style="border: 1px solid black; padding: 5px;"><strong><?php echo htmlspecialchars($row['TeamName']); ?></strong></td>
-                <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($row['GameTag']); ?></td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['Kills']; ?></td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['Deaths']; ?></td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['Assists']; ?></td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo number_format($row['GoldEarned']); ?></td>
-            </tr>
-            <?php endwhile; ?>
+
+            <?php if ($stats_result->num_rows > 0): ?>
+                <?php while($row = $stats_result->fetch_assoc()): ?>
+                <tr>
+                    <td style="border: 1px solid black; padding: 5px;"><strong><?php echo htmlspecialchars($row['TeamName']); ?></strong></td>
+                    <td style="border: 1px solid black; padding: 5px;"><?php echo htmlspecialchars($row['GameTag']); ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['Kills']; ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['Deaths']; ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo $row['Assists']; ?></td>
+                    <td style="border: 1px solid black; padding: 5px; text-align: center;"><?php echo number_format($row['GoldEarned']); ?></td>
+                </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="6" style="border: 1px solid black; padding: 10px; text-align: center;">
+                        No player stats recorded for this match yet.
+                    </td>
+                </tr>
+            <?php endif; ?>
         </table>
     </div>
 </body>

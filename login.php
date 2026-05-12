@@ -1,5 +1,5 @@
 <?php
-require_once 'db_connect.php';
+require_once 'db_connect_app.php';
 require_once 'auth_helpers.php';
 
 $error_message = '';
@@ -18,8 +18,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '' || $password === '') {
         $error_message = 'Please enter both username and password.';
     } else {
-        $stmt = $db->prepare("
-            SELECT u.userID, u.username, u.passwordHash, r.roleName AS role
+        $stmt = $app_db->prepare("
+            SELECT 
+                u.userID,
+                u.username,
+                u.passwordHash,
+                u.roleID,
+                r.roleName AS role,
+                r.dbAccountName
             FROM Users u
             JOIN Roles r ON u.roleID = r.roleID
             WHERE u.username = ?
@@ -33,9 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (password_verify($password, $user['passwordHash'])) {
                 session_regenerate_id(true);
+
                 $_SESSION['userID'] = $user['userID'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
+                $_SESSION['roleID'] = $user['roleID'];
+                $_SESSION['dbAccountName'] = $user['dbAccountName'];
 
                 header('Location: home_page.php');
                 exit();

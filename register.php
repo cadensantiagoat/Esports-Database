@@ -1,5 +1,5 @@
 <?php
-require_once 'db_connect.php';
+require_once 'db_connect_app.php';
 require_once 'auth_helpers.php';
 
 /** Matches Roles.roleID for 'Visitor' in esport_ddl3.sql */
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strlen($username) > 50 || strlen($email) > 100 || strlen($first_name) > 50 || strlen($last_name) > 50) {
         $error_message = 'One or more fields are too long.';
     } else {
-        $check = $db->prepare('SELECT userID FROM Users WHERE username = ? OR email = ? LIMIT 1');
+        $check = $app_db->prepare('SELECT userID FROM Users WHERE username = ? OR email = ? LIMIT 1');
         $check->bind_param('ss', $username, $email);
         $check->execute();
         $exists = $check->get_result()->fetch_assoc();
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $role_id = REGISTER_DEFAULT_ROLE_ID;
-            $stmt = $db->prepare(
+            $stmt = $app_db->prepare(
                 'INSERT INTO Users (firstName, lastName, username, email, passwordHash, roleID) VALUES (?, ?, ?, ?, ?, ?)'
             );
             $stmt->bind_param('sssssi', $first_name, $last_name, $username, $email, $hash, $role_id);

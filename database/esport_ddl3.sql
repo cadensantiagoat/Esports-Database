@@ -158,8 +158,10 @@ INSERT INTO RolePermissions (roleID, permissionName) VALUES
 (5, 'manage_all_teams'),
 (5, 'edit_all_stats'),
 (5, 'create_team'),
+(5, 'create_matches'),
 
 (4, 'edit_match_data'),
+(4, 'create_matches'),
 
 (3, 'create_team'),
 (3, 'manage_own_team'),
@@ -174,12 +176,14 @@ FLUSH PRIVILEGES;
 
 -- Visitor: public info only
 GRANT SELECT ON EsportLeagueDB.Teams TO 'visitor_role'@'localhost';
+GRANT SELECT ON EsportLeagueDB.TeamMembers TO 'visitor_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.Matches TO 'visitor_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.MatchTeam TO 'visitor_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.Rounds TO 'visitor_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.TeamStats TO 'visitor_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.PlayerStats TO 'visitor_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.Players TO 'visitor_role'@'localhost';
+GRANT SELECT ON EsportLeagueDB.RolePermissions TO 'visitor_role'@'localhost';
 
 -- Player
 GRANT SELECT ON EsportLeagueDB.Teams TO 'player_role'@'localhost';
@@ -191,6 +195,7 @@ GRANT SELECT ON EsportLeagueDB.TeamStats TO 'player_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.PlayerStats TO 'player_role'@'localhost';
 GRANT SELECT, UPDATE ON EsportLeagueDB.Players TO 'player_role'@'localhost';
 GRANT SELECT, UPDATE (firstName, lastName, email) ON EsportLeagueDB.Users TO 'player_role'@'localhost';
+GRANT SELECT ON EsportLeagueDB.RolePermissions TO 'player_role'@'localhost';
 
 -- Coach
 GRANT SELECT ON EsportLeagueDB.Users TO 'coach_role'@'localhost';
@@ -203,6 +208,10 @@ GRANT SELECT ON EsportLeagueDB.MatchTeam TO 'coach_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.Rounds TO 'coach_role'@'localhost';
 GRANT SELECT, UPDATE ON EsportLeagueDB.PlayerStats TO 'coach_role'@'localhost';
 GRANT SELECT, UPDATE ON EsportLeagueDB.TeamStats TO 'coach_role'@'localhost';
+GRANT SELECT ON EsportLeagueDB.RolePermissions TO 'coach_role'@'localhost';
+GRANT INSERT ON EsportLeagueDB.Teams TO 'coach_role'@'localhost';
+GRANT INSERT, UPDATE ON EsportLeagueDB.TeamMembers TO 'coach_role'@'localhost';
+
 
 -- Referee: broad write access
 GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.Users TO 'referee_role'@'localhost';
@@ -216,6 +225,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.Rounds TO 'referee_role'@
 GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.PlayerStats TO 'referee_role'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.TeamStats TO 'referee_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.Roles TO 'referee_role'@'localhost';
+GRANT SELECT ON EsportLeagueDB.RolePermissions TO 'referee_role'@'localhost';
 
 -- Executive Manager: top role, full app-level DB access
 GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.Users TO 'executive_manager_role'@'localhost';
@@ -229,5 +239,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.Rounds TO 'executive_mana
 GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.PlayerStats TO 'executive_manager_role'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON EsportLeagueDB.TeamStats TO 'executive_manager_role'@'localhost';
 GRANT SELECT ON EsportLeagueDB.Roles TO 'executive_manager_role'@'localhost';
+GRANT SELECT ON EsportLeagueDB.RolePermissions TO 'executive_manager_role'@'localhost';
 
 FLUSH PRIVILEGES;

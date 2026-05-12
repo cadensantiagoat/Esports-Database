@@ -1,6 +1,6 @@
 <?php
 require_once 'auth_helpers.php';
-require_once 'db_connect.php';
+require_once 'db_connect_app.php';
 
 require_login('login.php');
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user_id === null) {
             $error_message = 'You must be logged in to reset your password.';
         } else {
-            $stmt = $db->prepare("SELECT passwordHash FROM Users WHERE userID = ? LIMIT 1");
+            $stmt = $app_db->prepare("SELECT passwordHash FROM Users WHERE userID = ? LIMIT 1");
             $stmt->bind_param('i', $user_id);
             $stmt->execute();
             $row = $stmt->get_result()->fetch_assoc();
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error_message = 'Current password is incorrect.';
             } else {
                 $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
-                $update = $db->prepare("UPDATE Users SET passwordHash = ? WHERE userID = ?");
+                $update = $app_db->prepare("UPDATE Users SET passwordHash = ? WHERE userID = ?");
                 $update->bind_param('si', $new_hash, $user_id);
                 $update->execute();
                 $changed = $update->affected_rows;

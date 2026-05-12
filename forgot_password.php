@@ -1,7 +1,7 @@
 <?php
 // Include PEAR Mail package and db_connect to connect to your database
 require_once "Mail.php";
-require_once 'db_connect.php';
+require_once 'db_connect_app.php';
 require_once 'email_config.php';
 
 $message = "";
@@ -9,8 +9,8 @@ $message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
 
-    // Check if the email exists in the Users table using the $db object from db_connect.php
-    $stmt = $db->prepare("SELECT userID, username FROM Users WHERE email = ?");
+    // Check if the email exists in the Users table using the $app_db object from db_connect.php
+    $stmt = $app_db->prepare("SELECT userID, username FROM Users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
         // Update the database with the new hashed password
-        $update_stmt = $db->prepare("UPDATE Users SET passwordHash = ? WHERE email = ?");
+        $update_stmt = $app_db->prepare("UPDATE Users SET passwordHash = ? WHERE email = ?");
         $update_stmt->bind_param("ss", $hashed_password, $email);
         $update_stmt->execute();
 
@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                        "Your new temporary password is: " . $new_password . "\n\n" .
                        "Please log in and change this password as soon as possible.\n";
         
-        $fromaddress = "From: cadenb.santiago@gmail.com";
+        $fromaddress = $smtp_username;
 
         $headers = array(
             'From' => $fromaddress,
