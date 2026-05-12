@@ -33,6 +33,7 @@ INSERT INTO Users (firstName, lastName, username, email, passwordHash, roleID) V
 ('Sang-wook', 'Ryu', 'ryu_coach', 'ryu@geng.gg', @password123_hash, 3),
 ('Tim', 'Langsdorf', 'langsdorf_coach', 'langsdorf@csu.fullerton.edu', @password123_hash, 3),
 ('Ricky', 'Referee', 'referee_user', 'referee@lck.gg', @password123_hash, 4),
+('Test', 'Referee', 'test_referee', 'test_referee@lck.gg', @password123_hash, 4),
 ('Executive', 'Manager', 'executive_manager', 'exec@lck.gg', @password123_hash, 5),
 ('Caden', 'Test', 'CadenTest', 'cadenb.santiago@gmail.com', @password123_hash, 2)
 ON DUPLICATE KEY UPDATE

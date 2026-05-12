@@ -14,6 +14,8 @@ $role_passwords = [
     'player_role' => '!player',
     'coach_role' => '!coach',
     'referee_role' => '!referee',
+    // Backward compatibility for pre-permission-schema databases.
+    'league_owner_role' => '!league_owner',
     'executive_manager_role' => '!executive_manager'
 ];
 
