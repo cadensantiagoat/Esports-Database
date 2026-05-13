@@ -1,12 +1,12 @@
 <?php
-// In Docker, Apache reaches MariaDB over the service name, not localhost.
-// Override with DB_HOST if you are running outside Docker.
+// In a VM, Apache reaches MariaDB over localhost.
+// Override with DB_HOST if needed.
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-$host = getenv('DB_HOST') ?: 'cpsc431-mysql';
+$host = getenv('DB_HOST') ?: 'localhost';
 $db_name = getenv('DB_NAME') ?: 'EsportLeagueDB';
 
 $role_passwords = [

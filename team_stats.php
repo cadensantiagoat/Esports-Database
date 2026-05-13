@@ -7,17 +7,113 @@ if (!isset($_GET['team_id'])) {
 }
 
 $team_id = intval($_GET['team_id']);
+$error_message = '';
+$success_message = '';
 
 $team_sql = "SELECT teamID AS TeamID, teamName AS TeamName FROM Teams WHERE teamID = ?";
 $stmt_team = $db->prepare($team_sql);
 $stmt_team->bind_param("i", $team_id);
 $stmt_team->execute();
 $team_info = $stmt_team->get_result()->fetch_assoc();
+$stmt_team->close();
 
 if (!$team_info) {
     die("<h2>Error: Team not found.</h2><a href='home_page.php'>Return Home</a>");
 }
+
 $can_delete_team = can_manage_team($db, $team_id);
+$can_manage_roster = can_manage_team($db, $team_id);
+
+$valid_roster_roles = ['Top', 'Jgl', 'Mid', 'Bot', 'Sup', 'Sub'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_free_agent'])) {
+    if (!$can_manage_roster) {
+        http_response_code(403);
+        die("<h2>403 Forbidden</h2><p>You are not allowed to manage this team.</p><a href='team_stats.php?team_id=" . (int)$team_id . "'>Return to Team</a>");
+    }
+
+    $user_id = intval($_POST['user_id'] ?? 0);
+    $role_in_team = $_POST['role_in_team'] ?? '';
+
+    if ($user_id <= 0) {
+        $error_message = 'Invalid player selected.';
+    } elseif (!in_array($role_in_team, $valid_roster_roles, true)) {
+        $error_message = 'Please select a valid roster role.';
+    }
+
+    if ($error_message === '' && $role_in_team !== 'Sub') {
+        $slot_stmt = $db->prepare("
+            SELECT 1
+            FROM TeamMembers
+            WHERE teamID = ?
+              AND roleInTeam = ?
+              AND status = 'Active'
+            LIMIT 1
+        ");
+        $slot_stmt->bind_param("is", $team_id, $role_in_team);
+        $slot_stmt->execute();
+        $slot_taken = $slot_stmt->get_result()->fetch_assoc();
+        $slot_stmt->close();
+
+        if ($slot_taken) {
+            $error_message = 'That roster role is already filled on this team.';
+        }
+    }
+
+    if ($error_message === '') {
+        $check_stmt = $db->prepare("
+            SELECT 
+                u.userID,
+                u.username,
+                p.userID AS playerExists
+            FROM Users u
+            LEFT JOIN Players p ON p.userID = u.userID
+            LEFT JOIN TeamMembers tm
+              ON tm.userID = u.userID
+             AND tm.status = 'Active'
+             AND tm.roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub')
+            WHERE u.userID = ?
+              AND u.roleID = 2
+              AND tm.teamMemberID IS NULL
+            LIMIT 1
+        ");
+        $check_stmt->bind_param("i", $user_id);
+        $check_stmt->execute();
+        $free_agent = $check_stmt->get_result()->fetch_assoc();
+        $check_stmt->close();
+
+        if (!$free_agent) {
+            $error_message = 'That user is not an available free agent.';
+        } else {
+            if (!$free_agent['playerExists']) {
+                $default_rank = 'Unranked';
+
+                $player_stmt = $db->prepare("
+                    INSERT INTO Players (userID, gameTag, playerRank, lp)
+                    VALUES (?, ?, ?, 0)
+                ");
+                $player_stmt->bind_param("iss", $user_id, $free_agent['username'], $default_rank);
+                $player_stmt->execute();
+                $player_stmt->close();
+            }
+
+            $member_stmt = $db->prepare("
+                INSERT INTO TeamMembers (teamID, userID, roleInTeam, status)
+                VALUES (?, ?, ?, 'Active')
+            ");
+            $member_stmt->bind_param("iis", $team_id, $user_id, $role_in_team);
+            $member_stmt->execute();
+            $member_stmt->close();
+
+            header('Location: team_stats.php?team_id=' . $team_id . '&player_added=1');
+            exit();
+        }
+    }
+}
+
+if (isset($_GET['player_added']) && $_GET['player_added'] === '1') {
+    $success_message = 'Player added to roster successfully.';
+}
 
 // Average stats are computed across all recorded rounds for each player.
 $players_sql = "SELECT
@@ -56,7 +152,30 @@ $stmt_matches = $db->prepare($matches_sql);
 $stmt_matches->bind_param("i", $team_id);
 $stmt_matches->execute();
 $matches_result = $stmt_matches->get_result();
+
+$free_agents_result = null;
+
+if ($can_manage_roster) {
+    $free_agents_result = $db->query("
+        SELECT
+            u.userID,
+            u.username,
+            p.gameTag
+        FROM Users u
+        LEFT JOIN Players p ON p.userID = u.userID
+        LEFT JOIN TeamMembers tm
+          ON tm.userID = u.userID
+         AND tm.status = 'Active'
+         AND tm.roleInTeam IN ('Top','Jgl','Mid','Bot','Sup','Sub')
+        WHERE u.roleID = 2
+          AND tm.teamMemberID IS NULL
+        ORDER BY u.username ASC
+    ");
+}
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html>
@@ -70,11 +189,71 @@ $matches_result = $stmt_matches->get_result();
         <p><a href="home_page.php">← Back to Homepage</a></p>
 
         <h2><?php echo htmlspecialchars($team_info['TeamName']); ?></h2>
+
+        <?php if ($success_message): ?>
+            <p style="color: green;"><?php echo htmlspecialchars($success_message); ?></p>
+        <?php endif; ?>
+
+        <?php if ($error_message): ?>
+            <p style="color: red;"><?php echo htmlspecialchars($error_message); ?></p>
+        <?php endif; ?>
+
         <?php if ($can_delete_team): ?>
             <form action="delete_team.php" method="POST" onsubmit="return confirm('Delete this team and all related records? This cannot be undone.');">
                 <input type="hidden" name="team_id" value="<?php echo (int)$team_info['TeamID']; ?>">
                 <button type="submit" style="margin-bottom: 12px; background-color: #a20000; color: white;">Delete Team</button>
             </form>
+        <?php endif; ?>
+
+        <?php if ($can_manage_roster): ?>
+            <h2>Add Free Agent</h2>
+
+            <table style="border-collapse: collapse; width: 75%; margin-bottom: 25px;">
+                <tr style="background-color: #f2f2f2;">
+                    <th style="border: 1px solid black; padding: 5px;">Player</th>
+                    <th style="border: 1px solid black; padding: 5px;">Roster Role</th>
+                    <th style="border: 1px solid black; padding: 5px;">Action</th>
+                </tr>
+
+                <?php if ($free_agents_result && $free_agents_result->num_rows > 0): ?>
+                    <?php while ($free_agent = $free_agents_result->fetch_assoc()): ?>
+                        <tr>
+                            <form action="team_stats.php?team_id=<?php echo (int)$team_id; ?>" method="POST">
+                                <input type="hidden" name="add_free_agent" value="1">
+                                <input type="hidden" name="user_id" value="<?php echo (int)$free_agent['userID']; ?>">
+
+                                <td style="border: 1px solid black; padding: 5px;">
+                                    <?php echo htmlspecialchars($free_agent['gameTag'] ?: $free_agent['username']); ?>
+                                    <br>
+                                    <small><?php echo htmlspecialchars($free_agent['username']); ?></small>
+                                </td>
+
+                                <td style="border: 1px solid black; padding: 5px;">
+                                    <select name="role_in_team" required>
+                                        <option value="">Select Role</option>
+                                        <option value="Top">Top</option>
+                                        <option value="Jgl">Jgl</option>
+                                        <option value="Mid">Mid</option>
+                                        <option value="Bot">Bot</option>
+                                        <option value="Sup">Sup</option>
+                                        <option value="Sub">Sub</option>
+                                    </select>
+                                </td>
+
+                                <td style="border: 1px solid black; padding: 5px; text-align: center;">
+                                    <button type="submit">Add</button>
+                                </td>
+                            </form>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="3" style="border: 1px solid black; padding: 10px; text-align: center;">
+                            No free agents available.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </table>
         <?php endif; ?>
 
         <table style="border-collapse: collapse; width: 80%;">
